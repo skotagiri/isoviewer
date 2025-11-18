@@ -37,6 +37,7 @@ class MainView : View("ISO Viewer") {
     var details: VBox by singleAssign()
     var openedFile: File = File("");
     var selectedBoxPath: String? = null
+    var filePathField: javafx.scene.control.TextField by singleAssign()
 
     override fun onBeforeShow() {
         // try loading file from command line parameters if set
@@ -52,6 +53,7 @@ class MainView : View("ISO Viewer") {
     fun loadIso(file: File, reopenBox: Boolean) {
         raf = RandomAccessFile(file, "r")
         openedFile = file
+        filePathField.text = file.absolutePath
         runAsync {
             val isoFile = MyIsoFile(file)
             offsets = mutableMapOf(Pair(isoFile, 0L))
@@ -173,31 +175,60 @@ class MainView : View("ISO Viewer") {
 
     override val root = borderpane {
         top {
-            menubar {
-                menu("File") {
-                    item("Open", "Shortcut+O").action {
-                        val file = chooseFile(initialDirectory = openedFile.parentFile, filters = arrayOf(
-                                FileChooser.ExtensionFilter("MP4 files", "*.mp4", "*.uvu", "*.m4v", "*.m4a", "*.uva", "*.uvv", "*.uvt", "*.mov", "*.m4s", "*.ism?"),
-                                FileChooser.ExtensionFilter("All files", "*.*")))
-                        if (file.isNotEmpty()) {
-                            loadIso(file[0], false)
+            vbox {
+                menubar {
+                    menu("File") {
+                        item("Open", "Shortcut+O").action {
+                            val file = chooseFile(initialDirectory = openedFile.parentFile, filters = arrayOf(
+                                    FileChooser.ExtensionFilter("MP4 files", "*.mp4", "*.uvu", "*.m4v", "*.m4a", "*.uva", "*.uvv", "*.uvt", "*.mov", "*.m4s", "*.ism?"),
+                                    FileChooser.ExtensionFilter("All files", "*.*")))
+                            if (file.isNotEmpty()) {
+                                loadIso(file[0], false)
+                            }
+                        }
+
+                        item("Reload", "Shortcut+R").action {
+                            loadIso(openedFile, true)
+                        }
+                        item("Copy hex", "Shortcut+C").action {
+                            copyHex()
+                        }
+                        separator()
+
+                        item("Exit", "Shortcut+Q").action {
+                            Platform.exit()
                         }
                     }
+                }.isUseSystemMenuBar = System.getProperty("os.name").contains("Mac")
 
-                    item("Reload", "Shortcut+R").action {
-                        loadIso(openedFile, true)
+                toolbar {
+                    button("Open File") {
+                        action {
+                            val file = chooseFile(initialDirectory = openedFile.parentFile, filters = arrayOf(
+                                    FileChooser.ExtensionFilter("MP4 files", "*.mp4", "*.uvu", "*.m4v", "*.m4a", "*.uva", "*.uvv", "*.uvt", "*.mov", "*.m4s", "*.ism?"),
+                                    FileChooser.ExtensionFilter("All files", "*.*")))
+                            if (file.isNotEmpty()) {
+                                loadIso(file[0], false)
+                            }
+                        }
                     }
-                    item("Copy hex", "Shortcut+C").action {
-                        copyHex()
+                    label("File:") {
+                        style {
+                            paddingLeft = 10
+                            paddingRight = 5
+                        }
                     }
-                    separator()
-
-                    item("Exit", "Shortcut+Q").action {
-                        Platform.exit()
+                    filePathField = textfield {
+                        isEditable = false
+                        prefWidth = 600.0
+                        promptText = "No file loaded"
+                        style {
+                            backgroundColor += javafx.scene.paint.Color.TRANSPARENT
+                            borderColor += box(javafx.scene.paint.Color.TRANSPARENT)
+                        }
                     }
                 }
-            }.isUseSystemMenuBar = System.getProperty("os.name").contains("Mac")
-
+            }
         }
         center {
             splitpane(Orientation.HORIZONTAL) {
