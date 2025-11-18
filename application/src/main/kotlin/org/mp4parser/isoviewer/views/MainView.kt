@@ -238,8 +238,8 @@ class MainView : View("ISO Viewer") {
                                 val itra = param.value.iterator()
                                 while (itra.hasNext()) {
                                     val b = itra.nextByte()
-                                    s += if (Character.isLetterOrDigit(b.toInt())) {
-                                        Character.forDigit(b.toInt(), 10)
+                                    s += if (b in 32..126) {
+                                        b.toInt().toChar()
                                     } else {
                                         '.'
                                     }
